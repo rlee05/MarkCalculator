@@ -1,0 +1,367 @@
+import java.awt.BorderLayout;
+import java.awt.CardLayout;
+import java.awt.Component;
+import java.awt.Container;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.GridLayout;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.text.NumberFormat;
+import java.util.ArrayList;
+import java.util.Arrays;
+
+import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
+import javax.swing.ButtonGroup;
+import javax.swing.GroupLayout;
+import javax.swing.JButton;
+import javax.swing.JCheckBox;
+import javax.swing.JComponent;
+import javax.swing.JFormattedTextField;
+import javax.swing.JFrame;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JRadioButton;
+import javax.swing.JTextField;
+import javax.swing.text.MaskFormatter;
+
+
+// Calculates a student's average mark
+// December 16, 2013
+
+public class LeeMarkCalculator extends JPanel implements ActionListener, ItemListener, PropertyChangeListener, FocusListener {
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	final static int num = 9;
+	static JRadioButton [] radButtons;
+	ButtonGroup[] radButtonGroup;
+	ArrayList <JCheckBox>  checkBoxes;
+	static JFormattedTextField [] textFields;
+	
+	String[] courses = {"English", "French", "Biology", "Physics", "Chemistry", "Data Management", "Calculus and Vectors", "Advanced Functions", "Computer Science", "Average"};
+	JButton calculate, submit;
+	JPanel cards;
+
+	public LeeMarkCalculator() {
+		super (new BorderLayout());
+		initialize();
+		format();
+
+	}
+
+	private void initialize() {
+		// Initializes all all components
+
+		//===========JButtons===========//
+		calculate = new JButton ("Calculate");
+		calculate.addActionListener(this);
+		calculate.setActionCommand("calculate");
+
+		submit = new JButton ("Submit");
+		submit.addActionListener(this);
+		submit.setActionCommand("submit");
+
+		//===========NumberFormats===========//
+		NumberFormat markFormat = NumberFormat.getNumberInstance();
+		markFormat.setMaximumFractionDigits(0);
+		markFormat.setMaximumIntegerDigits(3);
+		
+		NumberFormat avgFormat = NumberFormat.getNumberInstance();
+		avgFormat.setMaximumFractionDigits(1);
+
+		//===========JFormattedTextFields===========//
+		textFields = new JFormattedTextField[num+1];
+		for (int t=0;t<num;t++) {
+			textFields[t]=new JFormattedTextField(markFormat);
+			textFields[t].setColumns(4);
+			textFields[t].addPropertyChangeListener("value",this);
+			textFields[t].addFocusListener(this);
+			textFields[t].setEditable(false);
+			textFields[t].setValue(0);
+		}
+		textFields[num]=new JFormattedTextField(avgFormat);
+		textFields[num].setColumns(4);
+		textFields[num].setEditable(false);
+		textFields[num].setValue(0);
+
+
+		//===========radioButtons===========//
+		// "Include" radio buttons
+		radButtons = new JRadioButton[num*2];
+		for (int i = 0; i<num;i++) {
+			radButtons[i]=new JRadioButton();
+			radButtons[i].addActionListener(this);
+		}
+
+		//"Exclude" radio buttons
+		for (int ii = num; ii<num*2;ii++) {
+			radButtons[ii]=new JRadioButton();
+			radButtons[ii].addActionListener(this);
+		}
+
+		// Groups "Include" and "Exclude" radio buttons according to subject
+		radButtonGroup = new ButtonGroup[num];
+		for (int r = 0; r<num;r++){
+			radButtonGroup[r]=new ButtonGroup();
+			radButtonGroup[r].add(radButtons[r]);
+			radButtonGroup[r].add(radButtons[r+num]);
+		}
+
+		//===========JCheckBoxes===========//
+		checkBoxes = new ArrayList <JCheckBox>();
+		for (int j = 0; j<num;j++) {
+			checkBoxes.add(new JCheckBox(courses[j]));
+			checkBoxes.get(j).addItemListener(this);
+		}
+	}
+
+	private void format(){
+		//===========Mark Calculator card===========//
+		
+		// Creates a label for all the checkboxes
+		JLabel course = new JLabel("Course");
+		JPanel checkPanel = new JPanel(new GridLayout(num,1,0,0));
+		for (int k = 0; k<num;k++) {
+			checkPanel.add(checkBoxes.get(k));
+		}
+
+		// Creates a label for all the "Include" radio buttons
+		JPanel includePanel = new JPanel(new GridLayout(num+1,1,0,3));
+		JLabel include = new JLabel("Include");
+		include.setHorizontalAlignment(JLabel.CENTER);
+		includePanel.add(include);
+		for (int n = 0; n<num;n++) {
+			includePanel.add(radButtons[n]);
+			radButtons[n].setSelected(false);
+		} 
+
+		// Creates a label for all the "Exclude" radio buttons
+		JPanel excludePanel = new JPanel(new GridLayout(num+1,1,0,3));
+		JLabel exclude = new JLabel("Exclude");
+		exclude.setHorizontalAlignment(JLabel.CENTER);
+		excludePanel.add(exclude);
+		for (int p = num; p<num*2;p++) {
+			excludePanel.add(radButtons[p]);
+			radButtons[p].setSelected(true);
+		}
+
+		// Creates a label for all the text fields
+		JPanel textPanel = new JPanel(new GridLayout(num+1,1,0,4));
+		JLabel text = new JLabel("Mark");
+		text.setHorizontalAlignment(JLabel.CENTER);
+		textPanel.add(text);
+		for (int q = 0; q<num;q++) {
+			textPanel.add(textFields[q]);
+		}
+
+		// Creates a card for mark calculator
+		course.setAlignmentX(Component.CENTER_ALIGNMENT);
+		checkPanel.setAlignmentX(CENTER_ALIGNMENT);
+		JPanel fullCheckPane = new JPanel();
+		fullCheckPane.setLayout(new BoxLayout(fullCheckPane, BoxLayout.PAGE_AXIS));
+		fullCheckPane.add(course);
+		fullCheckPane.add(checkPanel);
+
+		JPanel panels = new JPanel();
+		panels.add(fullCheckPane);
+		panels.add(textPanel);
+		panels.add(includePanel);
+		panels.add(excludePanel);
+
+		JPanel bottomText = new JPanel();
+		bottomText.add(new JLabel("Average:"), BorderLayout.WEST);
+		bottomText.add(textFields[num], BorderLayout.EAST);
+
+		JPanel bottom = new JPanel(new BorderLayout());
+		bottom.add(bottomText, BorderLayout.CENTER);
+		bottom.add(calculate, BorderLayout.PAGE_END);
+
+		JPanel calcCard = new JPanel(new BorderLayout());
+		calcCard.add(panels, BorderLayout.CENTER);
+		calcCard.add(bottom, BorderLayout.PAGE_END);
+
+		//===========Student Number Card===========//
+		JFormattedTextField studentNum = new JFormattedTextField(createFormatter("######"));
+		studentNum.setColumns(6);
+		JPanel numCard = new JPanel();
+		numCard.add(new JLabel("Student #:"));
+		numCard.add(studentNum);
+		numCard.add(submit);
+		
+		//===========Card Grouping===========//
+		// Adds cards to JPanel with CardLayout
+		cards = new JPanel(new CardLayout());
+		cards.add(numCard, "num");
+		cards.add(calcCard, "calc");
+		
+
+		add(cards, BorderLayout.CENTER);
+		setBorder(BorderFactory.createEmptyBorder(20,20,20,20));
+	}
+
+	public void actionPerformed(ActionEvent action) {
+		String command =action.getActionCommand();
+
+		// Executes if the "calculate" button is selected
+		if (command.equals("calculate")) {
+			// Averages the marks
+			textFields[num].setValue(average());
+		}
+		
+		// Executes if "submit" button of student-number-obtaining panel is selected
+		// Switches the panel to the mark calculator
+		else if (command.equals("submit")){
+			CardLayout c = (CardLayout) (cards.getLayout());
+			c.show(cards, "calc" );
+		}
+
+	}
+
+	public void itemStateChanged(ItemEvent item) {
+		JCheckBox source = (JCheckBox) item.getSource();
+		int index = checkBoxes.indexOf(source);
+
+		// If a checkbox is selected, the correlated text box because editable
+		if (textFields[index].isEditable()){
+			textFields[index].setValue(0);
+			textFields[index].setEditable(false);
+		}
+
+		// If a checkbox is delselected, the correlated text box becomes uneditable
+		else {
+			textFields[index].setEditable(true);
+		}
+
+	}
+
+	public void propertyChange(PropertyChangeEvent prop) {
+		JFormattedTextField source = (JFormattedTextField)prop.getSource();
+		System.out.println(prop.getPropertyName());
+		// Executes if the text field is editable
+		if (prop.getPropertyName().equals("value") && source.isEditable()){
+
+			// The text field is set to the user's input in a rounded integer form
+			int index = binarySearch(textFields,0,num-1,source);
+			int newValue = (int)Math.round(((Number) source.getValue()).doubleValue());
+
+			// Sets the value of the text field to 0 if the input is less than 0 or greater than 100
+			if (newValue >100 || newValue<0){
+				newValue = 0;
+			}
+
+			textFields[index].setValue(newValue);
+		}
+	}
+
+	public void focusGained(FocusEvent f) {
+		// Selects all the text in a text field when it is selected
+		JFormattedTextField source = (JFormattedTextField) f.getSource();
+		source.setText(source.getText());
+		source.selectAll();
+	}
+
+	public void focusLost(FocusEvent f) {
+	}
+
+	private static int binarySearch(JFormattedTextField[]textList, int start, int end, JFormattedTextField searchTerm){
+		// Finds the index of a term in the array
+		/* @param stringList	Array to be searched
+		 * @param start			Index to start looking at
+		 * @param end			Index to stop looking at
+		 * @param searchTerm	Object to look for
+		 * @return 				Index of the search term or an index that would be out of bounds if not found
+		 */
+
+		int len = end-start;
+
+		// Base case: if there is only one object in the search range and it is the search term, return the index
+		// If there is only one object in the search range and it is not the search term, return an index that would be out of bounds
+		if (len<1){
+			if (textList[start].equals(searchTerm)){
+				return start;
+			}
+
+			else {
+				return num+1;
+			}
+		}
+
+		// Recursive case: returns the largest value from searching the left side and right side of the list
+		return Math.min(binarySearch(textList, start, start+len/2,searchTerm), binarySearch(textList, start+len/2+1, end, searchTerm));
+
+	}
+
+	private static double average(){
+		// Averages the marks of the included courses
+		// @return 		The average of the included courses
+
+		double sum=0;
+		int count = 0;
+		double mean = 0;
+
+		// Sums the included courses
+		for (int i = 0; i<num;i++) {
+			if (textFields[i].isEditable() && radButtons[i].isSelected()){
+				sum+=((Number)(textFields[i].getValue())).doubleValue();
+				count++;
+			}
+		}
+
+		// Calculates and rounds the average
+		if (count>0){
+			mean = Math.round(sum/count*10)/10.0;
+		}
+
+		return mean;
+	}
+
+	protected MaskFormatter createFormatter (String s) {
+		// Creates a MaskFormatter for the student number text field
+		// Ensures that the student number is 6 digits and only numbers
+		
+		MaskFormatter formatter = null;
+		try{
+			formatter = new MaskFormatter(s);
+		}
+		catch (java.text.ParseException e) {
+			
+		}
+		return formatter;
+	}
+
+	private static void createAndShowGUI() {
+		//Create and set up the window.
+		JFrame frame = new JFrame("Mark Calculator");
+		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+
+		//Create and set up the content pane.
+		JComponent newContentPane = new LeeMarkCalculator();
+		newContentPane.setOpaque(true); //content panes must be opaque
+		frame.setContentPane(newContentPane);
+
+		//Display the window.
+		frame.pack();
+		frame.setVisible(true);
+	}
+
+	public static void main(String[] args) {
+		//Schedule a job for the event-dispatching thread:
+		//creating and showing this application's GUI.
+		javax.swing.SwingUtilities.invokeLater(new Runnable() {
+			public void run() {
+				createAndShowGUI();
+			}
+		});
+	}
+
+}
